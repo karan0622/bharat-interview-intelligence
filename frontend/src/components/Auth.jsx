@@ -30,7 +30,8 @@ export default function Auth({ onLogin, onBack }) {
     setError("");
     setLoading(true);
     try {
-      const res = await fetch(`/api/auth/send-otp`, {
+      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+      const res = await fetch(`${apiUrl}/api/auth/send-otp`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ contact_no: contactNo })
