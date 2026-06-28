@@ -8,7 +8,6 @@ const AVATARS = [
 
 export default function Auth({ onLogin, onBack }) {
   const [isLogin, setIsLogin] = useState(true);
-  const [authStep, setAuthStep] = useState('details'); // 'details' | 'otp'
   
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -16,49 +15,11 @@ export default function Auth({ onLogin, onBack }) {
   const [password, setPassword] = useState("");
   const [selectedAvatar, setSelectedAvatar] = useState(AVATARS[0]);
   
-  const [otp, setOtp] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const handleSendOTP = async (e) => {
-    e.preventDefault();
-    if (isLogin) {
-      handleFinalSubmit();
-      return;
-    }
-
-    setError("");
-    setLoading(true);
-    try {
-      const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-      const res = await fetch(`${apiUrl}/api/auth/send-otp`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ contact_no: contactNo })
-      });
-      const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || "Failed to send OTP");
-      } else {
-        setAuthStep('otp');
-      }
-    } catch (err) {
-      setError("Failed to connect to server");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleVerifyOTP = async (e) => {
-    e.preventDefault();
-    if (otp !== "123456") {
-      setError("Invalid OTP. For testing, use 123456.");
-      return;
-    }
-    handleFinalSubmit();
-  };
-
-  const handleFinalSubmit = async () => {
+  const handleFinalSubmit = async (e) => {
+    if (e) e.preventDefault();
     setError("");
     setLoading(true);
 
@@ -146,20 +107,19 @@ export default function Auth({ onLogin, onBack }) {
                 <BrainCircuit size={28} />
               </div>
               <h2 className="text-3xl font-bold text-white tracking-tight mb-2">
-                {isLogin ? "Welcome back" : (authStep === 'otp' ? "Verify identity" : "Create an account")}
+                {isLogin ? "Welcome back" : "Create an account"}
               </h2>
               <p className="text-slate-400 text-sm">
-                {isLogin ? "Enter your details to access your dashboard" : (authStep === 'otp' ? `We sent a code to ${contactNo}` : "Start your journey with Bharat Interview")}
+                {isLogin ? "Enter your details to access your dashboard" : "Start your journey with Bharat Interview"}
               </p>
             </div>
 
             <AnimatePresence mode="wait">
-              {authStep === 'details' && (
                 <motion.form 
                   key="details"
                   initial={{ opacity: 0, x: -20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.3 }}
-                  onSubmit={handleSendOTP} 
+                  onSubmit={handleFinalSubmit} 
                   className="space-y-5"
                 >
                   {!isLogin && (
@@ -230,55 +190,15 @@ export default function Auth({ onLogin, onBack }) {
                         </>
                       ) : (
                         <>
-                          {isLogin ? "Sign In" : "Send Verification Code"}
+                          {isLogin ? "Sign In" : "Sign Up"}
                           <ArrowRight size={18} />
                         </>
                       )}
                     </span>
                   </button>
                 </motion.form>
-              )}
 
-              {authStep === 'otp' && !isLogin && (
-                <motion.form 
-                  key="otp"
-                  initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 20 }}
-                  transition={{ duration: 0.3 }}
-                  onSubmit={handleVerifyOTP} 
-                  className="space-y-6"
-                >
-                  <div className="space-y-2 text-center">
-                    <label className="text-sm font-medium text-slate-300">Enter 6-digit OTP</label>
-                    <div className="relative max-w-[240px] mx-auto group">
-                      <input type="text" maxLength={6} required value={otp} onChange={e => setOtp(e.target.value)} className="w-full bg-slate-950/50 border-2 border-slate-700/50 text-slate-100 rounded-xl px-4 py-4 text-center text-3xl font-mono tracking-[0.5em] focus:bg-slate-900 focus:border-emerald-500 focus:ring-4 focus:ring-emerald-500/10 outline-none transition-all placeholder:text-slate-700" placeholder="------" />
-                    </div>
-                    <p className="text-xs text-slate-500 mt-3 bg-slate-800/50 inline-block px-3 py-1 rounded-full">For testing, use: <b className="text-emerald-400">123456</b></p>
-                  </div>
-
-                  {error && (
-                    <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} className="bg-rose-500/10 border border-rose-500/30 text-rose-400 text-sm p-3.5 rounded-xl flex items-center justify-center gap-2 font-medium">
-                      <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div> {error}
-                    </motion.div>
-                  )}
-
-                  <div className="space-y-3 pt-4">
-                    <button type="submit" disabled={loading} className="w-full py-3.5 rounded-xl font-bold text-white transition-all shadow-xl flex items-center justify-center gap-2 bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 shadow-emerald-500/25 disabled:opacity-70 group overflow-hidden relative">
-                      <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out"></div>
-                      <span className="relative z-10 flex items-center gap-2">
-                        {loading ? (
-                          <><div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div> Verifying...</>
-                        ) : "Verify & Create Account"}
-                      </span>
-                    </button>
-                    <button type="button" onClick={() => setAuthStep('details')} className="w-full py-3 text-sm font-medium text-slate-400 hover:text-white hover:bg-slate-800/50 rounded-xl transition-all">
-                      Go back to details
-                    </button>
-                  </div>
-                </motion.form>
-              )}
             </AnimatePresence>
-
-            {authStep === 'details' && (
               <div className="mt-8 pt-8 border-t border-slate-800/50 text-center">
                 <p className="text-slate-400 text-sm">
                   {isLogin ? "Don't have an account?" : "Already have an account?"}
@@ -290,7 +210,6 @@ export default function Auth({ onLogin, onBack }) {
                   </button>
                 </p>
               </div>
-            )}
           </div>
         </div>
       </motion.div>
