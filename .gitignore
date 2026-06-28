@@ -1,0 +1,18 @@
+# Environments
+.env
+.env.local
+.env.*.local
+
+# Node
+node_modules/
+dist/
+build/
+
+# Python
+venv/
+__pycache__/
+*.pyc
+interview_app.db
+
+# OS
+.DS_Store
